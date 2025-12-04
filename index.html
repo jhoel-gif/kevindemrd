@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Sorpresa</title>
+  <style>
+    html,body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      touch-action:manipulation; /* Mejora el toque en móviles */
+    }
+
+    .stage{
+      display:grid;
+      place-items:center;
+      height:100%;
+      background:url("https://i.pinimg.com/736x/16/3f/66/163f66c696d0adb724391f2ec895aaae.jpg") 
+        center/cover no-repeat fixed;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .message{
+      color:#fff;
+      text-transform:uppercase;
+      letter-spacing:2px;
+      font-weight:900;
+      font-size:clamp(1.2rem, 5vw, 3rem); /* Escala dinámicamente */
+      padding:1rem 2rem;
+      border-radius:1rem;
+      opacity:0;
+      transform:scale(0.7) rotate(-10deg);
+      transition:transform 700ms cubic-bezier(.2,.9,.25,1),
+                 opacity 700ms ease,
+                 filter 500ms ease;
+      filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));
+      background:linear-gradient(90deg,#ef4444,#f97316);
+      text-align:center;
+    }
+
+    .message.surprise{
+      opacity:1;
+      transform:scale(1.6) rotate(0deg);
+    }
+
+    /* Ajuste para pantallas grandes */
+    @media (min-width:900px){
+      .message.surprise{ transform:scale(2.5); }
+    }
+
+    canvas.confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+
+    .hint{
+      position:fixed;
+      left:1rem;
+      bottom:1rem;
+      color:#e5e7eb;
+      font-size:.9rem;
+      text-shadow:0 2px 4px #000;
+    }
+
+    .btn{
+      position:fixed;
+      right:1rem;
+      bottom:1rem;
+      background:#111827;
+      color:#fff;
+      padding:.6rem 1rem;
+      border-radius:.5rem;
+      border:0;
+      cursor:pointer;
+      font-size:1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div id="msg" class="message">andate a la mierda kevin</div>
+    <canvas id="c" class="confetti"></canvas>
+  </div>
+  <div class="hint">(Toca o recarga para sorprender)</div>
+  <button class="btn" id="showBtn">Mostrar ahora</button>
+
+  <script>
+    const msg = document.getElementById('msg');
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W, H, parts = [];
+
+    function resize(){
+      W = canvas.width = innerWidth;
+      H = canvas.height = innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const rand = (min,max)=> Math.random()*(max-min)+min;
+
+    function makeParticles(x,y){
+      const colors=['#f43f5e','#fb923c','#f59e0b','#fb7185','#60a5fa','#93c5fd'];
+      for(let i=0;i<50;i++){
+        parts.push({
+          x,y,
+          vx:rand(-6,6),
+          vy:rand(-14,-3),
+          r:rand(6,14),
+          color:colors[Math.floor(rand(0,colors.length))],
+          life:0,
+          ttl:rand(40,90)
+        });
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      for(let i=parts.length-1;i>=0;i--){
+        const p = parts[i];
+        p.x+=p.vx; p.y+=p.vy;
+        p.vy+=0.4; p.vx*=0.99; p.life++;
+        ctx.beginPath();
+        ctx.globalAlpha = 1 - p.life/p.ttl;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x,p.y,p.r,p.r);
+        if(p.life>p.ttl) parts.splice(i,1);
+      }
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    function surprise(){
+      if(msg.classList.contains('surprise')) return;
+      msg.classList.add('surprise');
+      makeParticles(innerWidth/2, innerHeight/2);
+
+      msg.animate([{filter:'brightness(1.3)'},{filter:'brightness(1)'}],
+        {duration:600,iterations:1});
+    }
+
+    // Delay sorpresa
+    const delay = Math.floor(rand(800,3200));
+    const timer = setTimeout(surprise, delay);
+
+    document.getElementById('showBtn').addEventListener('click',()=>{
+      clearTimeout(timer);
+      surprise();
+    });
+
+    // Soporte móvil: click y touch
+    const stage = document.querySelector('.stage');
+    stage.addEventListener('click', surprise);
+    stage.addEventListener('touchstart', surprise);
+  </script>
+</body>
+</html>
